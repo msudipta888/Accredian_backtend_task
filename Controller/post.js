@@ -4,9 +4,10 @@ import { prisma } from"../Database/db.js";
 import {config} from 'dotenv';
 config();
 const transporter = nodemailer.createTransport({
+  service:"gmail",
   host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // true for port 465, false for port 587
+  port: 587,
+  secure: false, 
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_PASS,
@@ -27,7 +28,7 @@ const transporter = nodemailer.createTransport({
   } = req.body;
  
   try {
-    console.log('post all referal')
+   
     const referral = await prisma.referral.create({
      data:{
         referrerName,
@@ -40,19 +41,20 @@ const transporter = nodemailer.createTransport({
     });
     if(!referral) 
         return res.json({mes:"problem"})
-    console.log('data base update');
+   
     //send Referral Email
-    res
-    .status(201)
-    .json({ message: "Referral created successfully", referral });
     const mailOptions = {
-      from: process.env.USER,
+      from: process.env.GMAIL_USER,
       to: referredEmail,
       subject: "You’ve been referred for an opportunity!",
       text: `Hello ${referredName},\n\n${referrerName} has referred you for ${course}.\n\nBest, Referral Team`,
     };
 
-    transporter.sendMail(mailOptions);
+  await  transporter.sendMail(mailOptions);
+    res
+    .status(201)
+    .json({ message: "Referral created successfully", referral });
+   
    
   } catch (error) {
     res.status(500).json({error: 'Error processing referral'})
